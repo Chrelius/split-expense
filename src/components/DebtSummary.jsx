@@ -1,6 +1,8 @@
-import { calculateDebtSummary, calculateSimplifiedDebts } from '../utils/calculations';
+import { useState } from 'react';
+import { calculateDebtSummary, calculateSimplifiedDebts, getExpenseBreakdownForSettlement } from '../utils/calculations';
 
 const DebtSummary = ({ expenses, settlements = {}, onToggleSettlement }) => {
+  const [expandedSettlement, setExpandedSettlement] = useState(null);
   const summary = calculateDebtSummary(expenses);
   const simplifiedDebts = calculateSimplifiedDebts(expenses);
 
@@ -11,7 +13,19 @@ const DebtSummary = ({ expenses, settlements = {}, onToggleSettlement }) => {
     }).format(amount);
   };
 
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
   const getSettlementKey = (from, to) => `${from}->${to}`;
+
+  const toggleBreakdown = (key, e) => {
+    e.stopPropagation();
+    setExpandedSettlement(expandedSettlement === key ? null : key);
+  };
 
   if (expenses.length === 0) {
     return (
@@ -40,53 +54,118 @@ const DebtSummary = ({ expenses, settlements = {}, onToggleSettlement }) => {
             </div>
             <h2 className="text-lg font-semibold text-gray-800">Settlements</h2>
           </div>
-          <p className="text-sm text-gray-500 mb-4">Click to mark as paid</p>
+          <p className="text-sm text-gray-500 mb-4">Click checkbox to mark as paid, or expand to see breakdown</p>
           <div className="space-y-2">
             {simplifiedDebts.map((debt, index) => {
               const key = getSettlementKey(debt.from, debt.to);
               const isSettled = settlements[key];
+              const isExpanded = expandedSettlement === key;
+              const breakdown = isExpanded ? getExpenseBreakdownForSettlement(expenses, debt.from, debt.to) : [];
               
               return (
-                <button
-                  key={index}
-                  onClick={() => onToggleSettlement && onToggleSettlement(key)}
-                  className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${
-                    isSettled 
-                      ? 'bg-green-50 border-green-200' 
-                      : 'bg-gray-50 border-gray-100 hover:border-gray-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      isSettled ? 'bg-green-500 border-green-500' : 'border-gray-300'
-                    }`}>
-                      {isSettled && (
-                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </div>
-                    <div className="text-left">
-                      <div className="flex items-center gap-2">
-                        <span className={`font-medium ${isSettled ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
-                          {debt.from}
-                        </span>
-                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                        </svg>
-                        <span className={`font-medium ${isSettled ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
-                          {debt.to}
-                        </span>
+                <div key={index} className="rounded-xl border overflow-hidden transition-all">
+                  <div
+                    className={`w-full flex items-center justify-between p-4 transition-all ${
+                      isSettled 
+                        ? 'bg-green-50 border-green-200' 
+                        : 'bg-gray-50 border-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => onToggleSettlement && onToggleSettlement(key)}
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                          isSettled ? 'bg-green-500 border-green-500' : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                        title={isSettled ? 'Mark as unpaid' : 'Mark as paid'}
+                      >
+                        {isSettled && (
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                      <div className="text-left">
+                        <div className="flex items-center gap-2">
+                          <span className={`font-medium ${isSettled ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
+                            {debt.from}
+                          </span>
+                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                          </svg>
+                          <span className={`font-medium ${isSettled ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
+                            {debt.to}
+                          </span>
+                        </div>
+                        {isSettled && (
+                          <span className="text-xs text-green-600 font-medium">Paid</span>
+                        )}
                       </div>
-                      {isSettled && (
-                        <span className="text-xs text-green-600 font-medium">Paid</span>
-                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-lg font-semibold ${isSettled ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                        {formatNumber(debt.amount)}
+                      </span>
+                      <button
+                        onClick={(e) => toggleBreakdown(key, e)}
+                        className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+                        title={isExpanded ? 'Hide breakdown' : 'Show breakdown'}
+                      >
+                        <svg 
+                          className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
-                  <span className={`text-lg font-semibold ${isSettled ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                    {formatNumber(debt.amount)}
-                  </span>
-                </button>
+                  
+                  {/* Expense Breakdown */}
+                  {isExpanded && breakdown.length > 0 && (
+                    <div className="bg-white border-t border-gray-100 p-4">
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Expense Breakdown</p>
+                      <div className="space-y-2">
+                        {breakdown.map((item) => (
+                          <div 
+                            key={`${item.expenseId}-${item.direction}`}
+                            className={`flex items-center justify-between p-3 rounded-lg ${
+                              item.direction === 'owes' ? 'bg-red-50' : 'bg-green-50'
+                            }`}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="inline-block px-2 py-0.5 text-xs font-medium bg-white rounded-full text-gray-600">
+                                  {item.type}
+                                </span>
+                                <span className="text-xs text-gray-400">
+                                  {formatDate(item.date)}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-700 truncate">{item.description}</p>
+                            </div>
+                            <div className="text-right ml-3">
+                              <span className={`text-sm font-semibold ${
+                                item.direction === 'owes' ? 'text-red-600' : 'text-green-600'
+                              }`}>
+                                {item.direction === 'owes' ? '+' : '-'}{formatNumber(item.amount)}
+                              </span>
+                              <p className="text-xs text-gray-400">
+                                {item.direction === 'owes' ? `${debt.from} owes` : `${debt.to} owes`}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
+                        <span className="text-sm text-gray-500">Net amount</span>
+                        <span className="text-sm font-semibold text-gray-900">{formatNumber(debt.amount)}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>

@@ -104,3 +104,43 @@ export const calculateSimplifiedDebts = (expenses) => {
       };
     });
 };
+
+/**
+ * Get expense breakdown for a specific settlement between two people
+ * @param {Array} expenses - Array of expense objects
+ * @param {string} from - Person who owes
+ * @param {string} to - Person who is owed
+ * @returns {Array} Array of expense details contributing to this settlement
+ */
+export const getExpenseBreakdownForSettlement = (expenses, from, to) => {
+  const breakdown = [];
+
+  expenses.forEach((expense) => {
+    const debts = calculateExpenseDebts(expense);
+    
+    debts.forEach((debt) => {
+      // Check if this expense involves the settlement pair
+      if (debt.from === from && debt.to === to) {
+        breakdown.push({
+          expenseId: expense.id,
+          description: expense.description || expense.type,
+          type: expense.type,
+          date: expense.date,
+          amount: Math.round(debt.amount * 100) / 100,
+          direction: 'owes', // from owes to
+        });
+      } else if (debt.from === to && debt.to === from) {
+        breakdown.push({
+          expenseId: expense.id,
+          description: expense.description || expense.type,
+          type: expense.type,
+          date: expense.date,
+          amount: Math.round(debt.amount * 100) / 100,
+          direction: 'owed', // from is owed by to (reduces what from owes)
+        });
+      }
+    });
+  });
+
+  return breakdown;
+};
