@@ -42,7 +42,7 @@ function App() {
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Split Expense</h1>
+              <h1 className="text-xl font-bold text-gray-900">Split Expenses</h1>
               <p className="text-xs text-gray-400">Track expenses with friends</p>
             </div>
             <div className="flex gap-2">
