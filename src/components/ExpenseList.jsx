@@ -59,16 +59,34 @@ const ExpenseList = ({ expenses, onDelete }) => {
                   <p className="text-gray-600 text-sm mb-3">{expense.description}</p>
                 )}
                 
-                {/* Payer */}
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center">
+                {/* Payer(s) */}
+                <div className="flex items-start gap-2 mb-3">
+                  <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                     <svg className="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
-                  <span className="text-sm text-gray-600">
-                    Paid by <span className="font-medium text-gray-900">{expense.payer}</span>
-                  </span>
+                  <div className="text-sm text-gray-600">
+                    {expense.payers && expense.payers.length > 0 ? (
+                      <div>
+                        <span>Paid by </span>
+                        {expense.payers.length === 1 ? (
+                          <span className="font-medium text-gray-900">{expense.payers[0].name}</span>
+                        ) : (
+                          <span className="font-medium text-gray-900">
+                            {expense.payers.map((p, i) => (
+                              <span key={p.name}>
+                                {p.name} ({formatNumber(p.amount)})
+                                {i < expense.payers.length - 1 ? ', ' : ''}
+                              </span>
+                            ))}
+                          </span>
+                        )}
+                      </div>
+                    ) : expense.payer ? (
+                      <span>Paid by <span className="font-medium text-gray-900">{expense.payer}</span></span>
+                    ) : null}
+                  </div>
                 </div>
                 
                 {/* Participants */}
