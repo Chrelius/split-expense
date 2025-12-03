@@ -26,7 +26,7 @@ export const useExpenses = () => {
   const addExpense = useCallback((expense) => {
     const newExpense = {
       ...expense,
-      id: Date.now(),
+      id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
     };
     setData((prev) => ({

@@ -124,6 +124,7 @@ const ExpenseForm = ({ people, onSubmit, onCancel }) => {
           type="number"
           step="0.01"
           min="0"
+          max="999999999"
           value={formData.amount}
           onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
           placeholder="Enter amount"

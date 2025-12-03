@@ -7,7 +7,7 @@ export const calculateExpenseDebts = (expense) => {
   const { amount, payer, participants } = expense;
   const debts = [];
   
-  if (!participants || participants.length === 0) {
+  if (!participants || participants.length === 0 || !amount || amount <= 0) {
     return debts;
   }
 
