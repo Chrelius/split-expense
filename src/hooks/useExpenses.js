@@ -11,17 +11,18 @@ const getInitialData = () => {
   return {
     expenses: stored.expenses || [],
     people: stored.people?.length > 0 ? stored.people : DEFAULT_PEOPLE,
+    settlements: stored.settlements || {},
   };
 };
 
 export const useExpenses = () => {
   const [data, setData] = useState(getInitialData);
-  const { expenses, people } = data;
+  const { expenses, people, settlements } = data;
 
   // Save to localStorage whenever data changes
   useEffect(() => {
-    saveData({ expenses, people });
-  }, [expenses, people]);
+    saveData({ expenses, people, settlements });
+  }, [expenses, people, settlements]);
 
   const addExpense = useCallback((expense) => {
     const newExpense = {
@@ -67,28 +68,51 @@ export const useExpenses = () => {
         ),
       }));
       
+      // Update settlements keys
+      const updatedSettlements = {};
+      Object.entries(prev.settlements).forEach(([key, value]) => {
+        const newKey = key
+          .replace(oldName + '->', newName + '->')
+          .replace('->' + oldName, '->' + newName);
+        updatedSettlements[newKey] = value;
+      });
+      
       return {
         expenses: updatedExpenses,
         people: updatedPeople,
+        settlements: updatedSettlements,
       };
     });
+  }, []);
+
+  const toggleSettlement = useCallback((key) => {
+    setData((prev) => ({
+      ...prev,
+      settlements: {
+        ...prev.settlements,
+        [key]: !prev.settlements[key],
+      },
+    }));
   }, []);
 
   const clearAllData = useCallback(() => {
     setData({
       expenses: [],
       people: DEFAULT_PEOPLE,
+      settlements: {},
     });
   }, []);
 
   return {
     expenses,
     people,
+    settlements,
     isLoaded: true,
     addExpense,
     updateExpense,
     deleteExpense,
     updatePerson,
+    toggleSettlement,
     clearAllData,
   };
 };

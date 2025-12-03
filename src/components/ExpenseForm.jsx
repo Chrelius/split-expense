@@ -94,31 +94,11 @@ const ExpenseForm = ({ people, onSubmit, onCancel }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-4 sm:p-6">
-      <h2 className="text-xl font-semibold mb-4 text-gray-800">Add New Expense</h2>
-      
-      {/* Expense Type */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Expense Type
-        </label>
-        <select
-          value={formData.type}
-          onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          {EXPENSE_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Amount */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Total Amount
+    <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      {/* Amount - Prominent at top */}
+      <div className="mb-5">
+        <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
+          Amount
         </label>
         <input
           type="number"
@@ -127,29 +107,76 @@ const ExpenseForm = ({ people, onSubmit, onCancel }) => {
           max="999999999"
           value={formData.amount}
           onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-          placeholder="Enter amount"
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            errors.amount ? 'border-red-500' : 'border-gray-300'
+          placeholder="0.00"
+          className={`w-full text-3xl font-bold text-gray-900 border-0 border-b-2 pb-2 focus:outline-none focus:border-indigo-500 bg-transparent ${
+            errors.amount ? 'border-red-500' : 'border-gray-200'
           }`}
         />
         {errors.amount && (
-          <p className="text-red-500 text-sm mt-1">{errors.amount}</p>
+          <p className="text-red-500 text-xs mt-1">{errors.amount}</p>
         )}
+      </div>
+
+      {/* Type and Date Row */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div>
+          <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
+            Type
+          </label>
+          <select
+            value={formData.type}
+            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+            className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50"
+          >
+            {EXPENSE_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
+            Date
+          </label>
+          <input
+            type="date"
+            value={formData.date}
+            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+            className={`w-full px-3 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 ${
+              errors.date ? 'border-red-500' : 'border-gray-200'
+            }`}
+          />
+        </div>
+      </div>
+
+      {/* Description */}
+      <div className="mb-4">
+        <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
+          Description
+        </label>
+        <input
+          type="text"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          placeholder="What was this for?"
+          className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50"
+        />
       </div>
 
       {/* Payer */}
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Who Paid?
+        <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
+          Paid by
         </label>
         <select
           value={formData.payer}
           onChange={(e) => setFormData({ ...formData, payer: e.target.value })}
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            errors.payer ? 'border-red-500' : 'border-gray-300'
+          className={`w-full px-3 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 ${
+            errors.payer ? 'border-red-500' : 'border-gray-200'
           }`}
         >
-          <option value="">Select payer</option>
+          <option value="">Select person</option>
           {people.map((person) => (
             <option key={person} value={person}>
               {person}
@@ -157,108 +184,73 @@ const ExpenseForm = ({ people, onSubmit, onCancel }) => {
           ))}
         </select>
         {errors.payer && (
-          <p className="text-red-500 text-sm mt-1">{errors.payer}</p>
+          <p className="text-red-500 text-xs mt-1">{errors.payer}</p>
         )}
       </div>
 
       {/* Participants */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Participants (who should split this expense?)
-        </label>
-        <div className="flex gap-2 mb-2">
-          <button
-            type="button"
-            onClick={selectAllParticipants}
-            className="text-sm px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200"
-          >
-            Select All
-          </button>
-          <button
-            type="button"
-            onClick={clearAllParticipants}
-            className="text-sm px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-          >
-            Clear All
-          </button>
+      <div className="mb-5">
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+            Split with
+          </label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={selectAllParticipants}
+              className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+            >
+              All
+            </button>
+            <span className="text-gray-300">|</span>
+            <button
+              type="button"
+              onClick={clearAllParticipants}
+              className="text-xs text-gray-500 hover:text-gray-700 font-medium"
+            >
+              None
+            </button>
+          </div>
         </div>
-        <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 p-3 border rounded-md ${
-          errors.participants ? 'border-red-500' : 'border-gray-300'
+        <div className={`grid grid-cols-2 sm:grid-cols-5 gap-2 ${
+          errors.participants ? 'ring-2 ring-red-200 rounded-xl p-1' : ''
         }`}>
           {people.map((person) => (
-            <label
+            <button
               key={person}
-              className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
+              type="button"
+              onClick={() => handleParticipantToggle(person)}
+              className={`px-3 py-2 text-sm rounded-xl transition-all ${
                 formData.participants.includes(person)
-                  ? 'bg-blue-100 text-blue-800'
-                  : 'bg-gray-50 hover:bg-gray-100'
+                  ? 'bg-indigo-500 text-white font-medium'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              <input
-                type="checkbox"
-                checked={formData.participants.includes(person)}
-                onChange={() => handleParticipantToggle(person)}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-              />
-              <span className="text-sm truncate">{person}</span>
-            </label>
+              {person}
+            </button>
           ))}
         </div>
         {errors.participants && (
-          <p className="text-red-500 text-sm mt-1">{errors.participants}</p>
+          <p className="text-red-500 text-xs mt-2">{errors.participants}</p>
         )}
       </div>
 
-      {/* Date */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Date
-        </label>
-        <input
-          type="date"
-          value={formData.date}
-          onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            errors.date ? 'border-red-500' : 'border-gray-300'
-          }`}
-        />
-        {errors.date && (
-          <p className="text-red-500 text-sm mt-1">{errors.date}</p>
-        )}
-      </div>
-
-      {/* Description */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Description
-        </label>
-        <textarea
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          placeholder="e.g., Dinner at Italian restaurant"
-          rows={2}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-        />
-      </div>
-
-      {/* Buttons */}
-      <div className="flex gap-3">
+      {/* Submit Button */}
+      <button
+        type="submit"
+        className="w-full bg-indigo-500 text-white py-3 px-4 rounded-xl hover:bg-indigo-600 transition-colors font-medium text-sm"
+      >
+        Add Expense
+      </button>
+      {onCancel && (
         <button
-          type="submit"
-          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
+          type="button"
+          onClick={onCancel}
+          className="w-full mt-2 py-3 px-4 text-sm text-gray-500 hover:text-gray-700 transition-colors"
         >
-          Add Expense
+          Cancel
         </button>
-        {onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </button>
-        )}
-      </div>
+      )}
     </form>
   );
 };
