@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react';
 
+const IMPORT_SUCCESS_CLOSE_DELAY_MS = 1500;
+
 const DataManager = ({ onExport, onImport, onClose }) => {
   const [importError, setImportError] = useState('');
   const [importSuccess, setImportSuccess] = useState(false);
@@ -36,7 +38,7 @@ const DataManager = ({ onExport, onImport, onClose }) => {
         setImportSuccess(true);
         setTimeout(() => {
           onClose();
-        }, 1500);
+        }, IMPORT_SUCCESS_CLOSE_DELAY_MS);
       } catch (error) {
         setImportError(error.message || 'Failed to import data');
       }

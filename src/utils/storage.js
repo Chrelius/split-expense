@@ -43,7 +43,12 @@ export const exportData = (data) => {
 };
 
 export const parseImportData = (jsonString) => {
-  const parsed = JSON.parse(jsonString);
+  let parsed;
+  try {
+    parsed = JSON.parse(jsonString);
+  } catch {
+    throw new Error('Invalid JSON format: unable to parse file');
+  }
   
   // Validate structure
   if (!parsed || typeof parsed !== 'object') {
