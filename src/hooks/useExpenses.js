@@ -63,6 +63,9 @@ export const useExpenses = () => {
       const updatedExpenses = prev.expenses.map((expense) => ({
         ...expense,
         payer: expense.payer === oldName ? newName : expense.payer,
+        payers: expense.payers 
+          ? expense.payers.map(p => p.name === oldName ? { ...p, name: newName } : p)
+          : undefined,
         participants: expense.participants.map((p) =>
           p === oldName ? newName : p
         ),

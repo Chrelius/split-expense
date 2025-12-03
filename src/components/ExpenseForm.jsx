@@ -17,7 +17,7 @@ const ExpenseForm = ({ people, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
     type: 'Miscellaneous',
     amount: '',
-    payer: people[0] || '',
+    payers: [], // Changed from single payer to array of payers with amounts
     participants: [],
     date: new Date().toISOString().split('T')[0],
     description: '',
@@ -32,8 +32,19 @@ const ExpenseForm = ({ people, onSubmit, onCancel }) => {
       newErrors.amount = 'Please enter a valid amount';
     }
     
-    if (!formData.payer) {
-      newErrors.payer = 'Please select who paid';
+    if (formData.payers.length === 0) {
+      newErrors.payers = 'Please select at least one person who paid';
+    } else {
+      const totalPaid = formData.payers.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+      const totalAmount = parseFloat(formData.amount) || 0;
+      
+      // Check if any payer has invalid amount
+      const hasInvalidAmount = formData.payers.some(p => !p.amount || parseFloat(p.amount) <= 0);
+      if (hasInvalidAmount) {
+        newErrors.payers = 'Each payer must have a valid amount';
+      } else if (Math.abs(totalPaid - totalAmount) > 0.01) {
+        newErrors.payers = `Total paid (${totalPaid.toFixed(2)}) must equal the expense amount (${totalAmount.toFixed(2)})`;
+      }
     }
     
     if (formData.participants.length === 0) {
@@ -55,13 +66,17 @@ const ExpenseForm = ({ people, onSubmit, onCancel }) => {
       onSubmit({
         ...formData,
         amount: parseFloat(formData.amount),
+        payers: formData.payers.map(p => ({
+          name: p.name,
+          amount: parseFloat(p.amount)
+        })),
       });
       
       // Reset form
       setFormData({
         type: 'Miscellaneous',
         amount: '',
-        payer: people[0] || '',
+        payers: [],
         participants: [],
         date: new Date().toISOString().split('T')[0],
         description: '',
@@ -77,6 +92,54 @@ const ExpenseForm = ({ people, onSubmit, onCancel }) => {
         ? prev.participants.filter((p) => p !== person)
         : [...prev.participants, person],
     }));
+  };
+
+  const handlePayerToggle = (person) => {
+    setFormData((prev) => {
+      const existingPayer = prev.payers.find(p => p.name === person);
+      if (existingPayer) {
+        // Remove payer
+        return {
+          ...prev,
+          payers: prev.payers.filter(p => p.name !== person),
+        };
+      } else {
+        // Add payer with default amount
+        const totalAmount = parseFloat(prev.amount) || 0;
+        const newPayers = [...prev.payers, { name: person, amount: '' }];
+        
+        // If this is the only payer, auto-fill with total amount
+        if (newPayers.length === 1 && totalAmount > 0) {
+          newPayers[0].amount = totalAmount.toString();
+        }
+        
+        return {
+          ...prev,
+          payers: newPayers,
+        };
+      }
+    });
+  };
+
+  const handlePayerAmountChange = (payerName, amount) => {
+    setFormData((prev) => ({
+      ...prev,
+      payers: prev.payers.map(p => 
+        p.name === payerName ? { ...p, amount } : p
+      ),
+    }));
+  };
+
+  const splitPayersEvenly = () => {
+    const totalAmount = parseFloat(formData.amount) || 0;
+    const numPayers = formData.payers.length;
+    if (numPayers > 0 && totalAmount > 0) {
+      const amountEach = (totalAmount / numPayers).toFixed(2);
+      setFormData((prev) => ({
+        ...prev,
+        payers: prev.payers.map(p => ({ ...p, amount: amountEach })),
+      }));
+    }
   };
 
   const selectAllParticipants = () => {
@@ -164,27 +227,67 @@ const ExpenseForm = ({ people, onSubmit, onCancel }) => {
         />
       </div>
 
-      {/* Payer */}
+      {/* Payers */}
       <div className="mb-4">
-        <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
-          Paid by
-        </label>
-        <select
-          value={formData.payer}
-          onChange={(e) => setFormData({ ...formData, payer: e.target.value })}
-          className={`w-full px-3 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 ${
-            errors.payer ? 'border-red-500' : 'border-gray-200'
-          }`}
-        >
-          <option value="">Select person</option>
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+            Paid by
+          </label>
+          {formData.payers.length > 1 && (
+            <button
+              type="button"
+              onClick={splitPayersEvenly}
+              className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+            >
+              Split evenly
+            </button>
+          )}
+        </div>
+        <div className={`grid grid-cols-2 sm:grid-cols-5 gap-2 ${
+          errors.payers && formData.payers.length === 0 ? 'ring-2 ring-red-200 rounded-xl p-1' : ''
+        }`}>
           {people.map((person) => (
-            <option key={person} value={person}>
+            <button
+              key={person}
+              type="button"
+              onClick={() => handlePayerToggle(person)}
+              className={`px-3 py-2 text-sm rounded-xl transition-all ${
+                formData.payers.some(p => p.name === person)
+                  ? 'bg-emerald-500 text-white font-medium'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
               {person}
-            </option>
+            </button>
           ))}
-        </select>
-        {errors.payer && (
-          <p className="text-red-500 text-xs mt-1">{errors.payer}</p>
+        </div>
+        
+        {/* Payer Amount Inputs */}
+        {formData.payers.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {formData.payers.map((payer) => (
+              <div key={payer.name} className="flex items-center gap-2">
+                <span className="text-sm text-gray-700 min-w-[80px] font-medium">{payer.name}</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="999999999"
+                  value={payer.amount}
+                  onChange={(e) => handlePayerAmountChange(payer.name, e.target.value)}
+                  placeholder="Amount paid"
+                  className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-gray-50"
+                />
+              </div>
+            ))}
+            <div className="text-xs text-gray-500 mt-1">
+              Total paid: {formData.payers.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0).toFixed(2)} / {parseFloat(formData.amount || 0).toFixed(2)}
+            </div>
+          </div>
+        )}
+        
+        {errors.payers && (
+          <p className="text-red-500 text-xs mt-2">{errors.payers}</p>
         )}
       </div>
 

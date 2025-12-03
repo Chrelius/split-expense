@@ -1,10 +1,16 @@
+// Threshold for considering a balance as non-zero (handles floating point precision)
+const BALANCE_THRESHOLD = 0.001;
+// Minimum amount for a transfer to be recorded
+const MIN_TRANSFER_AMOUNT = 0.01;
+
 /**
  * Calculate how much each participant owes for an expense
+ * Supports both single payer (legacy) and multiple payers
  * @param {Object} expense - The expense object
  * @returns {Array} Array of debt objects showing who owes whom and how much
  */
 export const calculateExpenseDebts = (expense) => {
-  const { amount, payer, participants } = expense;
+  const { amount, payer, payers, participants } = expense;
   const debts = [];
   
   if (!participants || participants.length === 0 || !amount || amount <= 0) {
@@ -13,15 +19,70 @@ export const calculateExpenseDebts = (expense) => {
 
   const sharePerPerson = amount / participants.length;
 
-  participants.forEach((participant) => {
-    if (participant !== payer) {
-      debts.push({
-        from: participant,
-        to: payer,
-        amount: sharePerPerson,
-      });
+  // Handle multiple payers
+  if (payers && payers.length > 0) {
+    // Calculate net balance for each person
+    const balances = {};
+    
+    // Each payer has positive balance for what they paid
+    payers.forEach(p => {
+      balances[p.name] = (balances[p.name] || 0) + p.amount;
+    });
+    
+    // Each participant owes their share (negative balance)
+    participants.forEach(participant => {
+      balances[participant] = (balances[participant] || 0) - sharePerPerson;
+    });
+    
+    // Find debtors (negative balance) and creditors (positive balance)
+    const debtors = [];
+    const creditors = [];
+    
+    Object.entries(balances).forEach(([person, balance]) => {
+      if (balance < -BALANCE_THRESHOLD) {
+        debtors.push({ name: person, amount: -balance });
+      } else if (balance > BALANCE_THRESHOLD) {
+        creditors.push({ name: person, amount: balance });
+      }
+    });
+    
+    // Sort for consistent matching
+    debtors.sort((a, b) => b.amount - a.amount);
+    creditors.sort((a, b) => b.amount - a.amount);
+    
+    // Match debtors to creditors
+    let i = 0, j = 0;
+    while (i < debtors.length && j < creditors.length) {
+      const debtor = debtors[i];
+      const creditor = creditors[j];
+      const transferAmount = Math.min(debtor.amount, creditor.amount);
+      
+      if (transferAmount > MIN_TRANSFER_AMOUNT) {
+        debts.push({
+          from: debtor.name,
+          to: creditor.name,
+          amount: Math.round(transferAmount * 100) / 100,
+        });
+      }
+      
+      debtor.amount -= transferAmount;
+      creditor.amount -= transferAmount;
+      
+      if (debtor.amount < MIN_TRANSFER_AMOUNT) i++;
+      if (creditor.amount < MIN_TRANSFER_AMOUNT) j++;
     }
-  });
+  } else if (payer) {
+    // Legacy single payer support
+    participants.forEach((participant) => {
+      if (participant !== payer) {
+        debts.push({
+          from: participant,
+          to: payer,
+          amount: sharePerPerson,
+        });
+      }
+    });
+  }
 
   return debts;
 };
@@ -94,7 +155,7 @@ export const calculateSimplifiedDebts = (expenses) => {
   });
 
   return Object.entries(debtMap)
-    .filter(([, amount]) => amount > 0.01)
+    .filter(([, amount]) => amount > MIN_TRANSFER_AMOUNT)
     .map(([key, amount]) => {
       const [from, to] = key.split('->');
       return {
