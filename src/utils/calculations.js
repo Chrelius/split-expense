@@ -1,3 +1,8 @@
+// Threshold for considering a balance as non-zero (handles floating point precision)
+const BALANCE_THRESHOLD = 0.001;
+// Minimum amount for a transfer to be recorded
+const MIN_TRANSFER_AMOUNT = 0.01;
+
 /**
  * Calculate how much each participant owes for an expense
  * Supports both single payer (legacy) and multiple payers
@@ -34,9 +39,9 @@ export const calculateExpenseDebts = (expense) => {
     const creditors = [];
     
     Object.entries(balances).forEach(([person, balance]) => {
-      if (balance < -0.001) {
+      if (balance < -BALANCE_THRESHOLD) {
         debtors.push({ name: person, amount: -balance });
-      } else if (balance > 0.001) {
+      } else if (balance > BALANCE_THRESHOLD) {
         creditors.push({ name: person, amount: balance });
       }
     });
@@ -52,7 +57,7 @@ export const calculateExpenseDebts = (expense) => {
       const creditor = creditors[j];
       const transferAmount = Math.min(debtor.amount, creditor.amount);
       
-      if (transferAmount > 0.01) {
+      if (transferAmount > MIN_TRANSFER_AMOUNT) {
         debts.push({
           from: debtor.name,
           to: creditor.name,
@@ -63,8 +68,8 @@ export const calculateExpenseDebts = (expense) => {
       debtor.amount -= transferAmount;
       creditor.amount -= transferAmount;
       
-      if (debtor.amount < 0.01) i++;
-      if (creditor.amount < 0.01) j++;
+      if (debtor.amount < MIN_TRANSFER_AMOUNT) i++;
+      if (creditor.amount < MIN_TRANSFER_AMOUNT) j++;
     }
   } else if (payer) {
     // Legacy single payer support
@@ -150,7 +155,7 @@ export const calculateSimplifiedDebts = (expenses) => {
   });
 
   return Object.entries(debtMap)
-    .filter(([, amount]) => amount > 0.01)
+    .filter(([, amount]) => amount > MIN_TRANSFER_AMOUNT)
     .map(([key, amount]) => {
       const [from, to] = key.split('->');
       return {

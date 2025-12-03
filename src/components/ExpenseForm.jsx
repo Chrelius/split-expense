@@ -280,11 +280,9 @@ const ExpenseForm = ({ people, onSubmit, onCancel }) => {
                 />
               </div>
             ))}
-            {formData.payers.length > 0 && (
-              <div className="text-xs text-gray-500 mt-1">
-                Total paid: {formData.payers.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0).toFixed(2)} / {parseFloat(formData.amount || 0).toFixed(2)}
-              </div>
-            )}
+            <div className="text-xs text-gray-500 mt-1">
+              Total paid: {formData.payers.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0).toFixed(2)} / {parseFloat(formData.amount || 0).toFixed(2)}
+            </div>
           </div>
         )}
         
