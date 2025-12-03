@@ -4,6 +4,7 @@ import ExpenseForm from './components/ExpenseForm';
 import ExpenseList from './components/ExpenseList';
 import DebtSummary from './components/DebtSummary';
 import PeopleManager from './components/PeopleManager';
+import DataManager from './components/DataManager';
 
 function App() {
   const {
@@ -16,10 +17,13 @@ function App() {
     updatePerson,
     toggleSettlement,
     clearAllData,
+    getExportData,
+    importData,
   } = useExpenses();
 
   const [activeTab, setActiveTab] = useState('expenses');
   const [showPeopleManager, setShowPeopleManager] = useState(false);
+  const [showDataManager, setShowDataManager] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   if (!isLoaded) {
@@ -56,6 +60,15 @@ function App() {
                 </svg>
               </button>
               <button
+                onClick={() => setShowDataManager(!showDataManager)}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Export / Import Data"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+              </button>
+              <button
                 onClick={() => setShowClearConfirm(true)}
                 className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                 title="Clear All"
@@ -78,6 +91,17 @@ function App() {
               people={people}
               onUpdatePerson={updatePerson}
               onClose={() => setShowPeopleManager(false)}
+            />
+          </div>
+        )}
+
+        {/* Data Manager */}
+        {showDataManager && (
+          <div className="mb-4">
+            <DataManager
+              onExport={getExportData}
+              onImport={importData}
+              onClose={() => setShowDataManager(false)}
             />
           </div>
         )}

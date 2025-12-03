@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getStoredData, saveData } from '../utils/storage';
+import { getStoredData, saveData, exportData, parseImportData } from '../utils/storage';
 
 const DEFAULT_PEOPLE = [
   'Person 1', 'Person 2', 'Person 3', 'Person 4', 'Person 5',
@@ -106,6 +106,19 @@ export const useExpenses = () => {
     });
   }, []);
 
+  const getExportData = useCallback(() => {
+    return exportData(data);
+  }, [data]);
+
+  const importData = useCallback((jsonString) => {
+    const importedData = parseImportData(jsonString);
+    setData({
+      expenses: importedData.expenses,
+      people: importedData.people.length > 0 ? importedData.people : DEFAULT_PEOPLE,
+      settlements: importedData.settlements,
+    });
+  }, []);
+
   return {
     expenses,
     people,
@@ -117,5 +130,7 @@ export const useExpenses = () => {
     updatePerson,
     toggleSettlement,
     clearAllData,
+    getExportData,
+    importData,
   };
 };
